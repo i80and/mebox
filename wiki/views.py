@@ -3,18 +3,27 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.models import User
+from django.http import HttpRequest, HttpResponse
 from .models import WikiPage, PageRevision, UserActivity
 from .forms import WikiPageForm
 import markdown_it
+from typing import Any, Dict, cast
 
 md = markdown_it.MarkdownIt()
 
-def home(request):
+
+def _get_authenticated_user(request: HttpRequest) -> User:
+    """Helper to get authenticated user from request"""
+    # This is safe because the views are decorated with @login_required
+    return request.user  # type: ignore[attr-defined]
+
+def home(request: HttpRequest) -> HttpResponse:
     """Home page showing recent wiki pages"""
     pages = WikiPage.objects.all().order_by('-created_at')[:10]
     return render(request, 'wiki/home.html', {'pages': pages})
 
-def signup(request):
+def signup(request: HttpRequest) -> HttpResponse:
     """User signup view"""
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -33,7 +42,7 @@ def signup(request):
         form = UserCreationForm()
     return render(request, 'wiki/signup.html', {'form': form})
 
-def user_login(request):
+def user_login(request: HttpRequest) -> HttpResponse:
     """User login view"""
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -57,16 +66,15 @@ def user_login(request):
         form = AuthenticationForm()
     return render(request, 'wiki/login.html', {'form': form})
 
-def user_logout(request):
+def user_logout(request: HttpRequest) -> HttpResponse:
     """User logout view"""
     logout(request)
     messages.info(request, 'You have been logged out.')
     return redirect('home')
 
 @login_required
-def user_profile(request, username):
+def user_profile(request: HttpRequest, username: str) -> HttpResponse:
     """User profile page"""
-    from django.contrib.auth.models import User
     user = User.objects.get(username=username)
     
     # Get user's wiki pages
@@ -78,13 +86,14 @@ def user_profile(request, username):
     })
 
 @login_required
-def create_wiki_page(request):
+def create_wiki_page(request: HttpRequest) -> HttpResponse:
     """Create a new wiki page"""
+    user = _get_authenticated_user(request)
     if request.method == 'POST':
         form = WikiPageForm(request.POST)
         if form.is_valid():
             page = form.save(commit=False)
-            page.author = request.user
+            page.author = user
             page.save()
             
             # Create initial revision
@@ -92,34 +101,35 @@ def create_wiki_page(request):
                 page=page,
                 title=page.title,
                 content=page.content,
-                editor=request.user,
+                editor=user,
                 is_current=True
             )
             
             # Log page creation activity
             UserActivity.objects.create(
-                user=request.user,
+                user=user,
                 activity_type='create_page',
                 page=page,
                 details=f'Created page "{page.title}"'
             )
             
             messages.success(request, 'Wiki page created successfully!')
-            return redirect('user_profile', username=request.user.username)
+            return redirect('user_profile', username=user.username)
     else:
         form = WikiPageForm()
     
     return render(request, 'wiki/create_page.html', {'form': form})
 
 @login_required
-def edit_wiki_page(request, page_id):
+def edit_wiki_page(request: HttpRequest, page_id: int) -> HttpResponse:
     """Edit an existing wiki page"""
+    user = _get_authenticated_user(request)
     page = get_object_or_404(WikiPage, id=page_id)
     
     # Check if user owns the page
-    if page.author != request.user:
+    if page.author != user:
         messages.error(request, 'You can only edit your own pages.')
-        return redirect('user_profile', username=request.user.username)
+        return redirect('user_profile', username=user.username)
     
     if request.method == 'POST':
         form = WikiPageForm(request.POST, instance=page)
@@ -146,29 +156,27 @@ def edit_wiki_page(request, page_id):
                     page=page,
                     title=new_title,
                     content=new_content,
-                    editor=request.user,
+                    editor=user,
                     is_current=True
                 )
             
             # Log page edit activity
             UserActivity.objects.create(
-                user=request.user,
+                user=user,
                 activity_type='edit_page',
                 page=page,
                 details=f'Edited page "{old_title}" → "{page.title}"'
             )
             
             messages.success(request, 'Wiki page updated successfully!')
-            return redirect('user_profile', username=request.user.username)
+            return redirect('user_profile', username=user.username)
     else:
         form = WikiPageForm(instance=page)
     
     return render(request, 'wiki/edit_page.html', {'form': form, 'page': page})
 
-def view_wiki_page(request, username, page_slug):
+def view_wiki_page(request: HttpRequest, username: str, page_slug: str) -> HttpResponse:
     """View a wiki page"""
-    from django.contrib.auth.models import User
-    
     user = User.objects.get(username=username)
     page = WikiPage.objects.get(author=user, slug=page_slug)
     
@@ -181,14 +189,15 @@ def view_wiki_page(request, username, page_slug):
     })
 
 @login_required
-def view_revisions(request, page_id):
+def view_revisions(request: HttpRequest, page_id: int) -> HttpResponse:
     """View all revisions of a wiki page"""
+    user = _get_authenticated_user(request)
     page = get_object_or_404(WikiPage, id=page_id)
     
     # Check if user owns the page or is admin
-    if page.author != request.user and not request.user.is_staff:
+    if page.author != user and not user.is_staff:
         messages.error(request, 'You can only view revisions of your own pages.')
-        return redirect('user_profile', username=request.user.username)
+        return redirect('user_profile', username=user.username)
     
     revisions = PageRevision.objects.filter(page=page).order_by('-created_at')
     
@@ -198,15 +207,16 @@ def view_revisions(request, page_id):
     })
 
 @login_required
-def restore_revision(request, page_id, revision_id):
+def restore_revision(request: HttpRequest, page_id: int, revision_id: int) -> HttpResponse:
     """Restore a previous revision of a wiki page"""
+    user = _get_authenticated_user(request)
     page = get_object_or_404(WikiPage, id=page_id)
     revision = get_object_or_404(PageRevision, id=revision_id, page=page)
     
     # Check if user owns the page
-    if page.author != request.user:
+    if page.author != user:
         messages.error(request, 'You can only restore revisions of your own pages.')
-        return redirect('user_profile', username=request.user.username)
+        return redirect('user_profile', username=user.username)
     
     if request.method == 'POST':
         # Mark current revisions as not current
@@ -222,13 +232,13 @@ def restore_revision(request, page_id, revision_id):
             page=page,
             title=page.title,
             content=page.content,
-            editor=request.user,
+            editor=user,
             is_current=True
         )
         
         # Log restoration activity
         UserActivity.objects.create(
-            user=request.user,
+            user=user,
             activity_type='edit_page',
             page=page,
             details=f'Restored page "{page.title}" to revision from {revision.created_at}'
@@ -243,10 +253,8 @@ def restore_revision(request, page_id, revision_id):
     })
 
 @login_required
-def user_activity(request, username):
+def user_activity(request: HttpRequest, username: str) -> HttpResponse:
     """View user activity feed"""
-    from django.contrib.auth.models import User
-    
     user = User.objects.get(username=username)
     
     # Get user's activity
@@ -258,14 +266,15 @@ def user_activity(request, username):
     })
 
 @login_required
-def delete_wiki_page(request, page_id):
+def delete_wiki_page(request: HttpRequest, page_id: int) -> HttpResponse:
     """Delete a wiki page"""
+    user = _get_authenticated_user(request)
     page = get_object_or_404(WikiPage, id=page_id)
     
     # Check if user owns the page
-    if page.author != request.user:
+    if page.author != user:
         messages.error(request, 'You can only delete your own pages.')
-        return redirect('user_profile', username=request.user.username)
+        return redirect('user_profile', username=user.username)
     
     if request.method == 'POST':
         page_title = page.title
@@ -273,12 +282,12 @@ def delete_wiki_page(request, page_id):
         
         # Log page deletion activity
         UserActivity.objects.create(
-            user=request.user,
+            user=user,
             activity_type='delete_page',
             details=f'Deleted page "{page_title}"'
         )
         
         messages.success(request, 'Wiki page deleted successfully!')
-        return redirect('user_profile', username=request.user.username)
+        return redirect('user_profile', username=user.username)
     
     return render(request, 'wiki/delete_page.html', {'page': page})

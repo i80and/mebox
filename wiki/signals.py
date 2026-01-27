@@ -2,9 +2,10 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from .models import UserActivity
+from typing import Any
 
 @receiver(post_save, sender=User)
-def create_user_activity_on_signup(sender, instance, created, **kwargs):
+def create_user_activity_on_signup(sender: type[User], instance: User, created: bool, **kwargs: Any) -> None:
     """Create activity when a user signs up"""
     if created:
         UserActivity.objects.create(
