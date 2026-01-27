@@ -12,19 +12,22 @@ dependencies = [
     "python-multipart>=0.0.6",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "django-debug-toolbar>=4.0",
     "black>=23.0",
     "isort>=5.0",
     "flake8>=6.0",
     "ty>=0.0.14",
     "ruff>=0.14.14",
+    "pytest>=8.4.2",
+    "pytest-django>=4.0",
+    "pytest-cov>=7.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "mebox.settings"
