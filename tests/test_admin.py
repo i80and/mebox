@@ -2,8 +2,6 @@
 Test cases for admin interface
 """
 
-import pytest
-from django.contrib.admin.sites import AdminSite
 from wiki.admin import WikiPageAdmin, PageRevisionAdmin, UserActivityAdmin
 from wiki.models import WikiPage, PageRevision, UserActivity
 

@@ -109,10 +109,6 @@ class TestURLPatternsExist:
 
     def test_all_expected_urls_exist(self):
         """Test that all expected URL patterns exist"""
-        from django.urls import get_resolver
-
-        resolver = get_resolver()
-
         expected_urls = [
             "home",
             "signup",

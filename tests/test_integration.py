@@ -347,7 +347,7 @@ class TestPerformance:
         assert PageRevision.objects.filter(page=page).count() == 50
 
         # Verify we can still view the page
-        response = client.get(f"/user/performanceuser/performance-test/")
+        response = client.get("/user/performanceuser/performance-test/")
         assert response.status_code == 200
 
         # Verify we can still view revisions

@@ -2,7 +2,6 @@
 Test cases for wiki signals
 """
 
-import pytest
 from django.contrib.auth.models import User
 from wiki.models import UserActivity
 from wiki import signals
@@ -64,10 +63,9 @@ class TestSignalIntegration:
     def test_signals_connected_on_app_ready(self):
         """Test that signals are connected when app is ready"""
         from django.apps import apps
-        from wiki.apps import WikiConfig
 
         # Get the wiki config
-        config = apps.get_app_config("wiki")
+        apps.get_app_config("wiki")
 
         # Check that signals are connected by looking through receivers
         # post_save.receivers is a list of tuples, each containing the signal handler

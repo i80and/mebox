@@ -3,8 +3,6 @@ Test cases for wiki views
 """
 
 import pytest
-from django.contrib.auth.models import User
-from django.urls import reverse
 
 from wiki.models import PageRevision, UserActivity, WikiPage
 
@@ -296,7 +294,7 @@ class TestRevisionRestoration:
         # First, create a new version
         wiki_page.content = "# New Version"
         wiki_page.save()
-        new_revision = PageRevision.objects.create(
+        PageRevision.objects.create(
             page=wiki_page,
             title="New Version",
             content="# New Version",
@@ -415,7 +413,7 @@ class TestPermissionChecks:
         second_page = WikiPage.objects.create(
             title="Second User Page", content="# Content", author=second_user
         )
-        second_revision = PageRevision.objects.create(
+        PageRevision.objects.create(
             page=second_page,
             title="Second User Page",
             content="# Content",

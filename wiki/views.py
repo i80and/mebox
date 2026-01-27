@@ -8,7 +8,6 @@ from django.http import HttpRequest, HttpResponse
 from .models import WikiPage, PageRevision, UserActivity
 from .forms import WikiPageForm
 import markdown_it
-from typing import Any, Dict, cast
 
 md = markdown_it.MarkdownIt()
 

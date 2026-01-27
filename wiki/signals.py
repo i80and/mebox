@@ -19,9 +19,6 @@ def create_user_activity_on_signup(
 
 
 # Import this module to connect signals
-import django.db.models.signals
-import django.dispatch.dispatcher
-from django.apps import apps
 
 # Connect the signal
 post_save.connect(create_user_activity_on_signup, sender=User)

@@ -2,7 +2,6 @@
 Test cases for wiki forms
 """
 
-import pytest
 from wiki.forms import WikiPageForm
 
 
