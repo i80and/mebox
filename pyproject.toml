@@ -23,3 +23,8 @@ dev-dependencies = [
     "isort>=5.0",
     "flake8>=6.0",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "mebox.settings"
+python_files = ["tests.py", "test_*.py"]
+addopts = "--cov=wiki --cov-report=term-missing"
