@@ -273,6 +273,20 @@
             text-decoration: underline;
         }
         
+        /* Wiki link styling - needs higher specificity to override .markdown-content a */
+        .markdown-content a.wiki-link-valid {
+            color: #3498db;
+        }
+        
+        .markdown-content a.wiki-link-invalid {
+            color: #e74c3c;
+            text-decoration: none;
+        }
+        
+        .markdown-content a.wiki-link-invalid:hover {
+            text-decoration: underline;
+        }
+        
         .markdown-content img {
             max-width: 100%;
             height: auto;

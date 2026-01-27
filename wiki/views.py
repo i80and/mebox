@@ -7,9 +7,7 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse
 from .models import WikiPage, PageRevision, UserActivity
 from .forms import WikiPageForm
-import markdown_it
-
-md = markdown_it.MarkdownIt()
+from .markdown_extensions import render_markdown_with_wiki_links
 
 
 def _get_authenticated_user(request: HttpRequest) -> User:
@@ -186,11 +184,11 @@ def view_wiki_page(request: HttpRequest, username: str, page_slug: str) -> HttpR
     user = User.objects.get(username=username)
     page = WikiPage.objects.get(author=user, slug=page_slug)
 
-    # Render markdown content
-    html_content = md.render(page.content)
+    # Render markdown content with wiki link support
+    html_content = render_markdown_with_wiki_links(page.content, username)
 
     return render(
-        request, "wiki/view_page.html", {"page": page, "html_content": html_content}
+        request, "wiki/view_page.html", {"page": page, "html_content": html_content, "username": username}
     )
 
 
