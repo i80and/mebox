@@ -1,0 +1,46 @@
+{% extends 'wiki/base.html' %}
+
+{% block title %}{{ profile_user.username }}'s Profile - MeBox{% endblock %}
+
+{% block content %}
+    <div class="user-profile">
+        <div class="user-avatar">{{ profile_user.username|slice:"1"|upper }}</div>
+        <div class="user-info">
+            <h2>{{ profile_user.username }}</h2>
+            <p>Member since {{ profile_user.date_joined|date:"F j, Y" }}</p>
+        </div>
+    </div>
+    
+    {% if user == profile_user %}
+        <a href="{% url 'create_wiki_page' %}" class="btn">Create New Page</a>
+    {% endif %}
+    
+    <h2 style="margin-top: 30px;">Wiki Pages</h2>
+    
+    {% if pages %}
+        <ul class="page-list">
+            {% for page in pages %}
+                <li>
+                    <a href="{% url 'view_wiki_page' profile_user.username page.slug %}">{{ page.title }}</a>
+                    <span class="page-actions">
+                        <small>{{ page.created_at|date:"M j, Y" }}</small>
+                        {% if user == profile_user %}
+                            <a href="{% url 'edit_wiki_page' page.id %}">Edit</a>
+                            <a href="{% url 'delete_wiki_page' page.id %}">Delete</a>
+                        {% endif %}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="empty-state">
+            <h3>No pages yet</h3>
+            {% if user == profile_user %}
+                <p>You haven't created any wiki pages yet.</p>
+                <a href="{% url 'create_wiki_page' %}" class="btn">Create Your First Page</a>
+            {% else %}
+                <p>{{ profile_user.username }} hasn't created any wiki pages yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

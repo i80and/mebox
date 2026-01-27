@@ -1,0 +1,17 @@
+{% extends 'wiki/base.html' %}
+
+{% block title %}Delete {{ page.title }} - MeBox{% endblock %}
+
+{% block content %}
+    <h1>Delete Wiki Page</h1>
+    <p>Are you sure you want to delete "{{ page.title }}"? This action cannot be undone.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button type="submit" class="btn btn-secondary">Delete Page</button>
+            <a href="{% url 'view_wiki_page' page.author.username page.slug %}" class="btn">Cancel</a>
+        </div>
+    </form>
+{% endblock %}

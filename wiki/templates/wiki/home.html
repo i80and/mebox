@@ -1,0 +1,33 @@
+{% extends 'wiki/base.html' %}
+
+{% block title %}Home - MeBox{% endblock %}
+
+{% block content %}
+    <h1>Welcome to MeBox</h1>
+    <p>Discover and create wiki pages from our community.</p>
+    
+    {% if pages %}
+        <h2>Recent Pages</h2>
+        <ul class="page-list">
+            {% for page in pages %}
+                <li>
+                    <a href="{% url 'view_wiki_page' page.author.username page.slug %}">{{ page.title }}</a>
+                    <span class="page-actions">
+                        <small>by {{ page.author.username }}</small>
+                        <small>{{ page.created_at|date:"M j, Y" }}</small>
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="empty-state">
+            <h3>No pages yet</h3>
+            <p>Be the first to create a wiki page!</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'create_wiki_page' %}" class="btn">Create Your First Page</a>
+            {% else %}
+                <a href="{% url 'signup' %}" class="btn">Sign Up to Create Pages</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

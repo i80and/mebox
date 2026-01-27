@@ -1,0 +1,27 @@
+{% extends 'wiki/base.html' %}
+
+{% block title %}{{ page.title }} - MeBox{% endblock %}
+
+{% block content %}
+    <div style="margin-bottom: 20px;">
+        <h1>{{ page.title }}</h1>
+        <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
+            <span><strong>By:</strong> <a href="{% url 'user_profile' page.author.username %}">{{ page.author.username }}</a></span>
+            <span><strong>Created:</strong> {{ page.created_at|date:"F j, Y" }}</span>
+            {% if page.updated_at != page.created_at %}
+                <span><strong>Updated:</strong> {{ page.updated_at|date:"F j, Y" }}</span>
+            {% endif %}
+        </div>
+        
+        {% if user == page.author %}
+            <div style="margin-top: 15px;">
+                <a href="{% url 'edit_wiki_page' page.id %}" class="btn">Edit</a>
+                <a href="{% url 'delete_wiki_page' page.id %}" class="btn btn-secondary">Delete</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="markdown-content">
+        {{ html_content|safe }}
+    </div>
+{% endblock %}

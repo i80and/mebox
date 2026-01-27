@@ -1,0 +1,29 @@
+{% extends 'wiki/base.html' %}
+
+{% block title %}Create Wiki Page - MeBox{% endblock %}
+
+{% block content %}
+    <h1>Create New Wiki Page</h1>
+    <p>Share your knowledge with the community.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="text-danger">
+                        {{ field.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <button type="submit" class="submit-btn">Create Page</button>
+    </form>
+{% endblock %}
