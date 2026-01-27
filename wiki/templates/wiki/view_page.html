@@ -16,6 +16,7 @@
         {% if user == page.author %}
             <div style="margin-top: 15px;">
                 <a href="{% url 'edit_wiki_page' page.id %}" class="btn">Edit</a>
+                <a href="{% url 'view_revisions' page.id %}" class="btn">View History</a>
                 <a href="{% url 'delete_wiki_page' page.id %}" class="btn btn-secondary">Delete</a>
             </div>
         {% endif %}

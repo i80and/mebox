@@ -1,0 +1,37 @@
+{% extends 'wiki/base.html' %}
+
+{% block title %}{{ profile_user.username }}'s Activity - MeBox{% endblock %}
+
+{% block content %}
+    <div class="user-profile">
+        <div class="user-avatar">{{ profile_user.username|slice:"1"|upper }}</div>
+        <div class="user-info">
+            <h2>{{ profile_user.username }}</h2>
+            <p>Activity Feed</p>
+        </div>
+    </div>
+    
+    <h2 style="margin-top: 30px;">Recent Activity</h2>
+    
+    {% if activities %}
+        <div style="margin-top: 20px;">
+            {% for activity in activities %}
+                <div style="padding: 15px; border-bottom: 1px solid #eee; display: flex; gap: 15px;">
+                    <div style="color: #7f8c8d; font-size: 12px; min-width: 80px;">{{ activity.created_at|date:"M j, Y H:i" }}</div>
+                    <div style="flex: 1;">
+                        <strong>{{ activity.get_activity_type_display }}</strong>
+                        {% if activity.page %}
+                            <a href="{% url 'view_wiki_page' activity.page.author.username activity.page.slug %}">{{ activity.page.title }}</a>
+                        {% endif %}
+                        <div style="color: #7f8c8d; font-size: 14px; margin-top: 5px;">{{ activity.details }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h3>No activity yet</h3>
+            <p>{{ profile_user.username }} hasn't performed any activities yet.</p>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'wiki/base.html' %}
+
+{% block title %}Revisions for {{ page.title }} - MeBox{% endblock %}
+
+{% block content %}
+    <div style="margin-bottom: 20px;">
+        <h1>Revisions for "{{ page.title }}"</h1>
+        <p>View and restore previous versions of this page.</p>
+        <a href="{% url 'view_wiki_page' page.author.username page.slug %}" class="btn">Back to Page</a>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h3>Current Version</h3>
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <strong>Title:</strong> {{ page.title }}<br>
+            <strong>Last Updated:</strong> {{ page.updated_at|date:"F j, Y H:i" }}<br>
+            <strong>By:</strong> {{ page.author.username }}
+        </div>
+    </div>
+    
+    <h3>Revision History</h3>
+    
+    {% if revisions %}
+        <div class="page-list">
+            {% for revision in revisions %}
+                <div style="padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>{{ revision.title }}</strong><br>
+                        <small>Edited by {{ revision.editor.username }} on {{ revision.created_at|date:"F j, Y H:i" }}</small>
+                        {% if revision.is_current %}
+                            <span style="background-color: #28a745; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px; margin-left: 10px;">Current</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if not revision.is_current %}
+                            <a href="{% url 'restore_revision' page.id revision.id %}" class="btn" style="background-color: #6c757d;">Restore</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h3>No revisions found</h3>
+            <p>This page has no revision history.</p>
+        </div>
+    {% endif %}
+{% endblock %}

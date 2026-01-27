@@ -1,0 +1,22 @@
+{% extends 'wiki/base.html' %}
+
+{% block title %}Restore Revision - MeBox{% endblock %}
+
+{% block content %}
+    <h1>Restore Revision</h1>
+    <p>Are you sure you want to restore this revision of "{{ page.title }}"?</p>
+    
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <strong>Revision Details:</strong><br>
+        <small>Edited by {{ revision.editor.username }} on {{ revision.created_at|date:"F j, Y H:i" }}</small>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button type="submit" class="btn btn-secondary">Restore This Revision</button>
+            <a href="{% url 'view_revisions' page.id %}" class="btn">Cancel</a>
+        </div>
+    </form>
+{% endblock %}

@@ -11,36 +11,45 @@
         </div>
     </div>
     
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <a href="{% url 'user_profile' profile_user.username %}" class="btn {% if not request.resolver_match.url_name == 'user_activity' %}btn-secondary{% endif %}">Wiki Pages</a>
+        <a href="{% url 'user_activity' profile_user.username %}" class="btn {% if request.resolver_match.url_name == 'user_activity' %}btn-secondary{% endif %}">Activity</a>
+    </div>
+    
     {% if user == profile_user %}
         <a href="{% url 'create_wiki_page' %}" class="btn">Create New Page</a>
     {% endif %}
     
-    <h2 style="margin-top: 30px;">Wiki Pages</h2>
+    {% if request.resolver_match.url_name == 'user_profile' %}
+        <h2 style="margin-top: 30px;">Wiki Pages</h2>
+    {% endif %}
     
-    {% if pages %}
-        <ul class="page-list">
-            {% for page in pages %}
-                <li>
-                    <a href="{% url 'view_wiki_page' profile_user.username page.slug %}">{{ page.title }}</a>
-                    <span class="page-actions">
-                        <small>{{ page.created_at|date:"M j, Y" }}</small>
-                        {% if user == profile_user %}
-                            <a href="{% url 'edit_wiki_page' page.id %}">Edit</a>
-                            <a href="{% url 'delete_wiki_page' page.id %}">Delete</a>
-                        {% endif %}
-                    </span>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="empty-state">
-            <h3>No pages yet</h3>
-            {% if user == profile_user %}
-                <p>You haven't created any wiki pages yet.</p>
-                <a href="{% url 'create_wiki_page' %}" class="btn">Create Your First Page</a>
-            {% else %}
-                <p>{{ profile_user.username }} hasn't created any wiki pages yet.</p>
-            {% endif %}
-        </div>
+    {% if request.resolver_match.url_name == 'user_profile' %}
+        {% if pages %}
+            <ul class="page-list">
+                {% for page in pages %}
+                    <li>
+                        <a href="{% url 'view_wiki_page' profile_user.username page.slug %}">{{ page.title }}</a>
+                        <span class="page-actions">
+                            <small>{{ page.created_at|date:"M j, Y" }}</small>
+                            {% if user == profile_user %}
+                                <a href="{% url 'edit_wiki_page' page.id %}">Edit</a>
+                                <a href="{% url 'delete_wiki_page' page.id %}">Delete</a>
+                            {% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state">
+                <h3>No pages yet</h3>
+                {% if user == profile_user %}
+                    <p>You haven't created any wiki pages yet.</p>
+                    <a href="{% url 'create_wiki_page' %}" class="btn">Create Your First Page</a>
+                {% else %}
+                    <p>{{ profile_user.username }} hasn't created any wiki pages yet.</p>
+                {% endif %}
+            </div>
+        {% endif %}
     {% endif %}
 {% endblock %}
