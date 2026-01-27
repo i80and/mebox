@@ -2,11 +2,11 @@
 Test cases for cross-user wiki links
 """
 
-import pytest
 from django.contrib.auth.models import User
-from wiki.models import WikiPage
-from wiki.markdown_extensions import render_markdown_with_wiki_links, wiki_link_plugin
 from markdown_it import MarkdownIt
+
+from wiki.markdown_extensions import render_markdown_with_wiki_links, wiki_link_plugin
+from wiki.models import WikiPage
 
 
 class TestCrossUserLinks:
@@ -57,11 +57,11 @@ class TestCrossUserLinks:
     def test_cross_user_link_validation_valid(self, db):
         """Test that cross-user links are validated correctly"""
         # Create two users
-        user1 = User.objects.create_user(username="user1", password="testpass")
+        _ = User.objects.create_user(username="user1", password="testpass")
         user2 = User.objects.create_user(username="user2", password="testpass")
 
         # Create a page for user2
-        page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Test Page", slug="test_page", content="# Test Content", author=user2
         )
 
@@ -77,11 +77,11 @@ class TestCrossUserLinks:
     def test_cross_user_link_validation_invalid(self, db):
         """Test that invalid cross-user links are marked as such"""
         # Create two users
-        user1 = User.objects.create_user(username="user1", password="testpass")
+        _ = User.objects.create_user(username="user1", password="testpass")
         user2 = User.objects.create_user(username="user2", password="testpass")
 
         # Create a page for user2
-        page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Test Page", slug="test_page", content="# Test Content", author=user2
         )
 
@@ -96,7 +96,7 @@ class TestCrossUserLinks:
 
     def test_cross_user_link_nonexistent_user(self, db):
         """Test that links to non-existent users are marked as invalid"""
-        user1 = User.objects.create_user(username="user1", password="testpass")
+        _ = User.objects.create_user(username="user1", password="testpass")
 
         # Link to non-existent user
         result = render_markdown_with_wiki_links(
@@ -113,10 +113,10 @@ class TestCrossUserLinks:
         user2 = User.objects.create_user(username="user2", password="testpass")
 
         # Create pages
-        page1 = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Page 1", slug="page1", content="# Test", author=user1
         )
-        page2 = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Page 2", slug="page2", content="# Test", author=user2
         )
 

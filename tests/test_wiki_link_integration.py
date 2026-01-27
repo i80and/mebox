@@ -2,8 +2,8 @@
 Integration test for wiki link functionality
 """
 
-import pytest
 from django.contrib.auth.models import User
+
 from wiki.models import WikiPage
 
 
@@ -16,7 +16,7 @@ class TestWikiLinkIntegration:
         user = User.objects.create_user(username="testuser", password="testpass")
 
         # Create a page that will be linked to
-        target_page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Target Page",
             slug="target_page",
             content="# This is the target page",
@@ -70,7 +70,7 @@ class TestWikiLinkIntegration:
         user = User.objects.create_user(username="testuser3", password="testpass")
 
         # Create a page that will be linked to
-        target_page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Target Page",
             slug="target_page",
             content="# This is the target page",
@@ -102,7 +102,7 @@ class TestWikiLinkIntegration:
         user = User.objects.create_user(username="testuser4", password="testpass")
 
         # Create a page that will be linked to
-        target_page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Target Page",
             slug="target_page",
             content="# This is the target page",

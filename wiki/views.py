@@ -4,10 +4,13 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.http import HttpRequest, HttpResponse, Http404
 from .models import WikiPage, PageRevision, UserActivity
 from .forms import WikiPageForm
 from .markdown_extensions import render_markdown_with_wiki_links
+
+UserModel = get_user_model()
 
 
 def _get_authenticated_user(request: HttpRequest) -> User:
@@ -182,21 +185,23 @@ def edit_wiki_page(request: HttpRequest, page_id: int) -> HttpResponse:
 def view_wiki_page(request: HttpRequest, username: str, page_slug: str) -> HttpResponse:
     """View a wiki page"""
     try:
-        user = User.objects.get(username=username)
-        page = WikiPage.objects.get(author=user, slug=page_slug)
-
-        # Render markdown content with wiki link support
-        html_content = render_markdown_with_wiki_links(page.content, username)
-
-        return render(
-            request,
-            "wiki/view_page.html",
-            {"page": page, "html_content": html_content, "username": username},
-        )
-    except User.DoesNotExist:
+        user = UserModel.objects.get(username=username)
+    except UserModel.DoesNotExist:
         raise Http404(f'User "{username}" does not exist')
-    except WikiPage.DoesNotExist:
+
+    try:
+        page = WikiPage.objects.get(author=user, slug=page_slug)
+    except WikiPage.DoesNotExist:  # type: ignore[misc]
         raise Http404(f'Page "{page_slug}" does not exist for user "{username}"')
+
+    # Render markdown content with wiki link support
+    html_content = render_markdown_with_wiki_links(page.content, username)
+
+    return render(
+        request,
+        "wiki/view_page.html",
+        {"page": page, "html_content": html_content, "username": username},
+    )
 
 
 @login_required

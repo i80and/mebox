@@ -2,7 +2,6 @@
 Test cases for markdown extensions
 """
 
-import pytest
 from django.contrib.auth.models import User
 from wiki.models import WikiPage
 from wiki.markdown_extensions import render_markdown_with_wiki_links, wiki_link_plugin
@@ -143,7 +142,7 @@ class TestRenderMarkdownWithWikiLinks:
     def test_render_with_username_no_pages(self, db):
         """Test rendering with username but no pages exist"""
         # Create a user but no pages
-        user = User.objects.create_user(
+        User.objects.create_user(
             username="testuser_no_pages", password="testpass"
         )
 
@@ -160,7 +159,7 @@ class TestRenderMarkdownWithWikiLinks:
     def test_render_with_valid_link(self, db):
         """Test rendering with a valid wiki link"""
         user = User.objects.create_user(username="testuser_valid", password="testpass")
-        page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Test Page Valid",
             slug="test_page_valid",
             content="# Test Content",
@@ -182,7 +181,7 @@ class TestRenderMarkdownWithWikiLinks:
         user = User.objects.create_user(
             username="testuser_invalid", password="testpass"
         )
-        page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Test Page Invalid",
             slug="test_page_invalid",
             content="# Test Content",
@@ -204,7 +203,7 @@ class TestRenderMarkdownWithWikiLinks:
         user = User.objects.create_user(
             username="testuser_display", password="testpass"
         )
-        page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Test Page Display",
             slug="test_page_display",
             content="# Test Content",
@@ -224,7 +223,7 @@ class TestRenderMarkdownWithWikiLinks:
     def test_render_mixed_valid_and_invalid(self, db):
         """Test rendering with both valid and invalid links"""
         user = User.objects.create_user(username="testuser_mixed", password="testpass")
-        page1 = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Test Page 1 Mixed",
             slug="test_page_1_mixed",
             content="# Test Content 1",

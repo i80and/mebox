@@ -2,7 +2,6 @@
 Test cases for invalid wiki link handling
 """
 
-import pytest
 from django.contrib.auth.models import User
 from wiki.models import WikiPage
 
@@ -42,7 +41,7 @@ class TestInvalidLinkHandling:
         """Test that invalid cross-user links return 404"""
         # Create and login a user
         user1 = User.objects.create_user(username="user1", password="testpass")
-        user2 = User.objects.create_user(username="user2", password="testpass")
+        User.objects.create_user(username="user2", password="testpass")
         client.login(username="user1", password="testpass")
 
         # Create a page with an invalid cross-user link
@@ -63,7 +62,7 @@ class TestInvalidLinkHandling:
         assert 'data-wiki-username="user2"' in content
 
         # Try to access the invalid cross-user link directly
-        response = client.get(f"/user/user2/nonexistent/")
+        response = client.get("/user/user2/nonexistent/")
 
         # Should return 404
         assert response.status_code == 404
@@ -76,7 +75,7 @@ class TestInvalidLinkHandling:
         client.login(username="user1", password="testpass")
 
         # Create a page for user2
-        target_page = WikiPage.objects.create(
+        WikiPage.objects.create(
             title="Target Page",
             slug="target_page",
             content="# Target Content",
@@ -99,7 +98,7 @@ class TestInvalidLinkHandling:
         assert 'class="wiki-link-valid"' in response.content.decode()
 
         # Access the cross-user link
-        response = client.get(f"/user/user2/target_page/")
+        response = client.get("/user/user2/target_page/")
         assert response.status_code == 200
         assert b"Target Content" in response.content
 

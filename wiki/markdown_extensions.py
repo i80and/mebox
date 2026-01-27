@@ -2,11 +2,13 @@
 Markdown extensions for the wiki application.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from markdown_it import MarkdownIt
 from markdown_it.rules_inline import StateInline
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import WikiPage
+
+UserModel = get_user_model()
 
 
 def wiki_link_plugin(
@@ -86,11 +88,11 @@ def wiki_link_plugin(
             if validation_username:
                 # Check if this user has a page with the target slug
                 try:
-                    target_user = User.objects.get(username=validation_username)
+                    target_user = UserModel.objects.get(username=validation_username)
                     is_valid = WikiPage.objects.filter(
                         author=target_user, slug=target_slug
                     ).exists()
-                except User.DoesNotExist:
+                except UserModel.DoesNotExist:
                     is_valid = False
             elif not cross_user and user_pages:
                 # Same-user link - check in the current user's pages
@@ -142,10 +144,10 @@ def render_markdown_with_wiki_links(
     user_pages = None
     if username:
         try:
-            user = User.objects.get(username=username)
+            user = UserModel.objects.get(username=username)
             pages = WikiPage.objects.filter(author=user)
             user_pages = {page.slug: page.title for page in pages}
-        except User.DoesNotExist:
+        except UserModel.DoesNotExist:
             user_pages = {}
 
     # Apply the plugin with user pages for validation
