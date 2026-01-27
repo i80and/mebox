@@ -30,16 +30,24 @@
         // Fix wiki link URLs to use the correct format
         document.addEventListener('DOMContentLoaded', function() {
             const wikiLinks = document.querySelectorAll('a[data-wiki-link]');
-            const username = '{{ username }}';
+            const currentUsername = '{{ username }}';
             
             wikiLinks.forEach(link => {
                 const targetSlug = link.getAttribute('data-wiki-link');
+                const targetUsername = link.getAttribute('data-wiki-username');
                 const href = link.getAttribute('href');
                 
                 // Replace .html with the correct user/page format
                 if (href && href.endsWith('.html')) {
-                    const newHref = `/user/${username}/${targetSlug}/`;
-                    link.setAttribute('href', newHref);
+                    // Cross-user link: User:username/page
+                    if (targetUsername) {
+                        const newHref = `/user/${targetUsername}/${targetSlug}/`;
+                        link.setAttribute('href', newHref);
+                    } else {
+                        // Same-user link: [[page]]
+                        const newHref = `/user/${currentUsername}/${targetSlug}/`;
+                        link.setAttribute('href', newHref);
+                    }
                 }
             });
         });

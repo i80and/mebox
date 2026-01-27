@@ -1,6 +1,7 @@
 """
 Markdown extensions for the wiki application.
 """
+
 from typing import Dict, List, Optional
 from markdown_it import MarkdownIt
 from markdown_it.rules_inline import StateInline
@@ -8,19 +9,28 @@ from django.contrib.auth.models import User
 from .models import WikiPage
 
 
-def wiki_link_plugin(md: MarkdownIt, user_pages: Optional[Dict[str, str]] = None) -> None:
+def wiki_link_plugin(
+    md: MarkdownIt,
+    user_pages: Optional[Dict[str, str]] = None,
+    username: Optional[str] = None,
+) -> None:
     """
     Plugin to handle [[wiki-style]] links.
-    
+
     Args:
         md: The MarkdownIt instance
         user_pages: Optional dict mapping slugs to page titles for validation
+        username: Optional username for cross-user link validation
     """
-    
+
     def wiki_link_rule(state: StateInline, silent: bool) -> bool:
         """
         Rule to parse [[wiki-style]] links.
-        
+
+        Supports two formats:
+        - [[page]] - same user namespace
+        - [[User:username/page]] - cross-user namespace
+
         Returns:
             True if a wiki link was found and processed, False otherwise
         """
@@ -48,23 +58,53 @@ def wiki_link_plugin(md: MarkdownIt, user_pages: Optional[Dict[str, str]] = None
             else:
                 target = display = content
 
-            # Clean up target (remove spaces, convert to slug format)
-            target_slug = target.strip().replace(" ", "_")
+            # Parse target - check for User: namespace
+            target_slug = target.strip()
+            cross_user = False
+            target_username = None
+
+            if target_slug.startswith("User:"):
+                # Cross-user link format: User:username/page
+                parts = target_slug[5:].split("/", 1)  # Remove "User:" prefix
+                if len(parts) == 2:
+                    target_username = parts[0].strip()
+                    target_slug = parts[1].strip().replace(" ", "_")
+                    cross_user = True
+                else:
+                    # Invalid User: format (no page specified), treat as regular link
+                    # Remove the User: prefix and treat as normal text
+                    target_slug = target_slug[5:].strip().replace(" ", "_")
+                    cross_user = False
+            else:
+                # Same-user link - convert spaces to underscores
+                target_slug = target_slug.replace(" ", "_")
 
             # Check if the page exists for validation
             is_valid = False
-            if user_pages:
-                # Check if the target exists in the provided pages
-                # The target_slug should match exactly with a page slug
+            validation_username = target_username if cross_user else username
+
+            if validation_username:
+                # Check if this user has a page with the target slug
+                try:
+                    target_user = User.objects.get(username=validation_username)
+                    is_valid = WikiPage.objects.filter(
+                        author=target_user, slug=target_slug
+                    ).exists()
+                except User.DoesNotExist:
+                    is_valid = False
+            elif not cross_user and user_pages:
+                # Same-user link - check in the current user's pages
                 is_valid = target_slug in user_pages
 
             # Create link token
-            # Note: The href will be set by the view context, but we need to store the target
-            # For now, we'll use a placeholder that the view can replace
+            # Store information for JavaScript to fix the URL
             token = state.push("link_open", "a", 1)
             token.attrSet("href", f"/{target_slug}.html")
             token.attrSet("data-wiki-link", target_slug)
-            
+
+            if cross_user and target_username:
+                token.attrSet("data-wiki-username", target_username)
+
             # Add class based on validity
             if is_valid:
                 token.attrSet("class", "wiki-link-valid")
@@ -88,16 +128,16 @@ def render_markdown_with_wiki_links(
 ) -> str:
     """
     Render markdown content with wiki link support.
-    
+
     Args:
         content: The markdown content to render
         username: Optional username to validate links against
-        
+
     Returns:
         HTML string with rendered markdown and wiki links
     """
     md = MarkdownIt()
-    
+
     # If username is provided, load all pages by that user for validation
     user_pages = None
     if username:
@@ -107,8 +147,8 @@ def render_markdown_with_wiki_links(
             user_pages = {page.slug: page.title for page in pages}
         except User.DoesNotExist:
             user_pages = {}
-    
+
     # Apply the plugin with user pages for validation
-    md.use(lambda m: wiki_link_plugin(m, user_pages))
-    
+    md.use(lambda m: wiki_link_plugin(m, user_pages, username))
+
     return md.render(content)

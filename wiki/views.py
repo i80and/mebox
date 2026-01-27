@@ -188,7 +188,9 @@ def view_wiki_page(request: HttpRequest, username: str, page_slug: str) -> HttpR
     html_content = render_markdown_with_wiki_links(page.content, username)
 
     return render(
-        request, "wiki/view_page.html", {"page": page, "html_content": html_content, "username": username}
+        request,
+        "wiki/view_page.html",
+        {"page": page, "html_content": html_content, "username": username},
     )
 
 
