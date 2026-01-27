@@ -136,7 +136,11 @@ class TestURLPatternsExist:
                 elif url_name in ["user_profile", "user_activity"]:
                     # user_profile and user_activity require only username
                     reverse(url_name, args=["testuser"])
-                elif url_name in ["edit_wiki_page", "delete_wiki_page", "view_revisions"]:
+                elif url_name in [
+                    "edit_wiki_page",
+                    "delete_wiki_page",
+                    "view_revisions",
+                ]:
                     # These URLs require a page_id
                     reverse(url_name, args=[1])
                 elif url_name == "restore_revision":

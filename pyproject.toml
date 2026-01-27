@@ -23,6 +23,7 @@ dev-dependencies = [
     "isort>=5.0",
     "flake8>=6.0",
     "ty>=0.0.14",
+    "ruff>=0.14.14",
 ]
 
 [tool.pytest.ini_options]
