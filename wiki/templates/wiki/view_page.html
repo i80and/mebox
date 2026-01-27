@@ -36,6 +36,7 @@
                 const targetSlug = link.getAttribute('data-wiki-link');
                 const targetUsername = link.getAttribute('data-wiki-username');
                 const href = link.getAttribute('href');
+                const isInvalid = link.classList.contains('wiki-link-invalid');
                 
                 // Replace .html with the correct user/page format
                 if (href && href.endsWith('.html')) {
@@ -43,10 +44,26 @@
                     if (targetUsername) {
                         const newHref = `/user/${targetUsername}/${targetSlug}/`;
                         link.setAttribute('href', newHref);
+                        
+                        // If invalid cross-user link, add click handler for 404
+                        if (isInvalid) {
+                            link.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                alert('This page does not exist in the target user\'s namespace.');
+                            });
+                        }
                     } else {
                         // Same-user link: [[page]]
                         const newHref = `/user/${currentUsername}/${targetSlug}/`;
                         link.setAttribute('href', newHref);
+                        
+                        // If invalid same-user link, redirect to create page
+                        if (isInvalid) {
+                            link.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                window.location.href = `/user/${currentUsername}/${targetSlug}/create/`;
+                            });
+                        }
                     }
                 }
             });

@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, Http404
 from .models import WikiPage, PageRevision, UserActivity
 from .forms import WikiPageForm
 from .markdown_extensions import render_markdown_with_wiki_links
@@ -181,17 +181,22 @@ def edit_wiki_page(request: HttpRequest, page_id: int) -> HttpResponse:
 
 def view_wiki_page(request: HttpRequest, username: str, page_slug: str) -> HttpResponse:
     """View a wiki page"""
-    user = User.objects.get(username=username)
-    page = WikiPage.objects.get(author=user, slug=page_slug)
+    try:
+        user = User.objects.get(username=username)
+        page = WikiPage.objects.get(author=user, slug=page_slug)
 
-    # Render markdown content with wiki link support
-    html_content = render_markdown_with_wiki_links(page.content, username)
+        # Render markdown content with wiki link support
+        html_content = render_markdown_with_wiki_links(page.content, username)
 
-    return render(
-        request,
-        "wiki/view_page.html",
-        {"page": page, "html_content": html_content, "username": username},
-    )
+        return render(
+            request,
+            "wiki/view_page.html",
+            {"page": page, "html_content": html_content, "username": username},
+        )
+    except User.DoesNotExist:
+        raise Http404(f'User "{username}" does not exist')
+    except WikiPage.DoesNotExist:
+        raise Http404(f'Page "{page_slug}" does not exist for user "{username}"')
 
 
 @login_required
@@ -301,3 +306,29 @@ def delete_wiki_page(request: HttpRequest, page_id: int) -> HttpResponse:
         return redirect("user_profile", username=user.username)
 
     return render(request, "wiki/delete_page.html", {"page": page})
+
+
+@login_required
+def handle_invalid_wiki_link(
+    request: HttpRequest, username: str, page_slug: str
+) -> HttpResponse:
+    """
+    Handle invalid wiki links.
+
+    If the link is to the current user's namespace, redirect to create page.
+    If the link is to another user's namespace, return 404.
+    """
+    current_user = _get_authenticated_user(request)
+
+    # If the link is to the current user's namespace
+    if username == current_user.username:
+        # Redirect to create page with the slug pre-filled
+        messages.info(
+            request, f'Page "{page_slug}" does not exist. Creating a new page.'
+        )
+        return redirect("create_wiki_page")
+    else:
+        # Link is to another user's namespace - 404
+        raise Http404(
+            f'Page "{page_slug}" does not exist in user "{username}" namespace'
+        )

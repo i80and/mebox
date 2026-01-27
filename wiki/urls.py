@@ -17,6 +17,12 @@ urlpatterns = [
     path("create/", views.create_wiki_page, name="create_wiki_page"),
     path("edit/<int:page_id>/", views.edit_wiki_page, name="edit_wiki_page"),
     path("delete/<int:page_id>/", views.delete_wiki_page, name="delete_wiki_page"),
+    # Invalid wiki link handler
+    path(
+        "user/<str:username>/<slug:page_slug>/create/",
+        views.handle_invalid_wiki_link,
+        name="handle_invalid_wiki_link",
+    ),
     # Revision URLs
     path("page/<int:page_id>/revisions/", views.view_revisions, name="view_revisions"),
     path(
