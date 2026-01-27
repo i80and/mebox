@@ -1,12 +1,13 @@
-from django.db import models
+from typing import TYPE_CHECKING, Optional
+
 from django.contrib.auth.models import User
-from django.utils.text import slugify
+from django.db import models
 from django.urls import reverse
-from typing import Optional, TYPE_CHECKING
+from django.utils.text import slugify
 
 if TYPE_CHECKING:
-    from django.db.models.manager import BaseManager
     from django.db.models.fields.related import ForeignKey
+    from django.db.models.manager import BaseManager
 
     # Django model instances have the actual attributes at runtime
     class WikiPage(models.Model):
