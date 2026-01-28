@@ -1,4 +1,5 @@
 {% extends 'wiki/base.html' %}
+{% load wiki_extras %}
 
 {% block title %}{{ page.title }} - MeBox{% endblock %}
 
@@ -9,10 +10,9 @@
 {% block og_title %}{{ page.title }} - {{ page.author.username }}'s Wiki Page{% endblock %}
 
 {% block og_description %}
-{% if page.content|length < 200 %}
-{{ page.content|striptags|truncatechars:200 }}
-{% else %}
-{{ page.content|striptags|truncatechars:200 }}...{% endif %}
+{% with description=html_content|striptags|truncatechars:200 %}
+{{ description|remove_unresolved_templates }}
+{% endwith %}
 {% endblock %}
 
 {% block content %}
