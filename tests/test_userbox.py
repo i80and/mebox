@@ -101,8 +101,9 @@ def test_userbox_with_markdown():
 
     # The markdown should be processed (bold and italic tags)
     # Note: The markdown is processed after template resolution
-    assert "<strong>" in result or "**Bold**" in result
-    assert "<em>" in result or "_markdown_" in result
+    # HTML tags are escaped for security, so we look for escaped versions
+    assert "&lt;strong&gt;" in result or "**Bold**" in result
+    assert "&lt;em&gt;" in result or "_markdown_" in result
     assert "🎉" in result
 
 
@@ -126,10 +127,11 @@ def test_userbox_markdown_in_all_sections():
 
     # Check that markdown is rendered in all sections
     # Left section should have bold emoji
-    assert "<strong>" in result or "**🐍**" in result
+    # HTML tags are escaped for security
+    assert "&lt;strong&gt;" in result or "**🐍**" in result
     # Middle section should have both italic and bold
-    assert "<em>" in result or "_italic_" in result
-    assert "<strong>" in result or "**bold**" in result
+    assert "&lt;em&gt;" in result or "_italic_" in result
+    assert "&lt;strong&gt;" in result or "**bold**" in result
     # Right section should have emoji
     assert "🎉" in result
     # Should still have the userbox structure
@@ -186,3 +188,45 @@ def test_userbox_right_width():
 
     # Check that right section has 45px width
     assert "width: 45px" in result
+
+
+@pytest.mark.django_db
+def test_userbox_apostrophe_handling():
+    """Test that apostrophes are properly handled (not double-escaped)."""
+    content = "{{userbox|middle=It's written in Django!}}"
+    result = render_markdown_with_wiki_links(content)
+
+    # Apostrophe should be escaped as &apos; for security
+    assert "It&apos;s" in result
+    # Should not have double-escaping issues
+    assert "&amp;apos;" not in result
+    # Should not have stray </p> tags
+    assert "&lt;/p&gt;" not in result
+
+
+@pytest.mark.django_db
+def test_userbox_no_stray_p_tags():
+    """Test that markdown-rendered content doesn't have stray </p> tags."""
+    content = "{{userbox|left=🦨|middle=We have userboxes!|middle-bg=#aaaaff}}"
+    result = render_markdown_with_wiki_links(content)
+
+    # Content should be clean without stray HTML tags
+    assert "🦨" in result
+    assert "We have userboxes!" in result
+    # Should not have escaped </p> tags
+    assert "&lt;/p&gt;" not in result
+
+
+@pytest.mark.django_db
+def test_userbox_markdown_with_apostrophe():
+    """Test markdown formatting with apostrophes."""
+    content = "{{userbox|middle=It's **awesome** and _cool_!}}"
+    result = render_markdown_with_wiki_links(content)
+
+    # Both apostrophe and markdown should work
+    assert "It&apos;s" in result
+    # Markdown should be rendered (then escaped for security)
+    assert "&lt;strong&gt;" in result or "**awesome**" in result
+    assert "&lt;em&gt;" in result or "_cool_" in result
+    # No stray tags
+    assert "&lt;/p&gt;" not in result

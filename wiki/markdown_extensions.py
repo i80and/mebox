@@ -270,12 +270,6 @@ def _generate_userbox_html(params: Dict[str, str]) -> str:
     right_bg = params.get("right-bg", "#f0f0f0")
     right_fg = params.get("right-fg", "#000000")
 
-    # Escape HTML to prevent XSS attacks before rendering markdown
-    # This ensures that any HTML tags in the input are escaped
-    left_escaped = _escape_html(left)
-    middle_escaped = _escape_html(middle)
-    right_escaped = _escape_html(right)
-
     # Sanitize URLs in markdown links to prevent XSS
     # Replace dangerous protocols with safe placeholders
     def sanitize_markdown_text(text: str) -> str:
@@ -314,10 +308,11 @@ def _generate_userbox_html(params: Dict[str, str]) -> str:
 
         return text
 
-    # Sanitize the markdown content
-    left_sanitized = _sanitize_markdown_text(left_escaped)
-    middle_sanitized = _sanitize_markdown_text(middle_escaped)
-    right_sanitized = _sanitize_markdown_text(right_escaped)
+    # Sanitize the markdown content (but don't escape yet - we'll do that after markdown rendering)
+    # This allows markdown features like apostrophes to work correctly
+    left_sanitized = _sanitize_markdown_text(left)
+    middle_sanitized = _sanitize_markdown_text(middle)
+    right_sanitized = _sanitize_markdown_text(right)
 
     # Render markdown for the content sections
     # We use a simple markdown renderer for the userbox content
@@ -333,15 +328,29 @@ def _generate_userbox_html(params: Dict[str, str]) -> str:
         """Extract inner content from markdown-rendered HTML, removing wrapper tags."""
         if html_content.startswith("<p>"):
             html_content = html_content[3:]
+        # Remove </p> tag, handling both </p> and </p>
+
         if html_content.endswith("</p>"):
             html_content = html_content[:-4]
+        elif html_content.endswith("</p>\n"):
+            html_content = html_content[:-5]
+
         return html_content.strip()
 
-    left_content = extract_inner_html(left_html) if left_escaped else left_escaped
-    middle_content = (
-        extract_inner_html(middle_html) if middle_escaped else middle_escaped
+    # Extract inner HTML and escape it to prevent XSS
+    # We escape AFTER markdown rendering to preserve markdown features like apostrophes
+    # Remove <p> tags first, then escape the content
+    left_inner = extract_inner_html(left_html) if left_sanitized else left_sanitized
+    middle_inner = (
+        extract_inner_html(middle_html) if middle_sanitized else middle_sanitized
     )
-    right_content = extract_inner_html(right_html) if right_escaped else right_escaped
+    right_inner = extract_inner_html(right_html) if right_sanitized else right_sanitized
+
+    left_content = _escape_html(left_inner) if left_sanitized else left_sanitized
+    middle_content = (
+        _escape_html(middle_inner) if middle_sanitized else middle_sanitized
+    )
+    right_content = _escape_html(right_inner) if right_sanitized else right_sanitized
 
     # Build the HTML structure
     html_parts = []
