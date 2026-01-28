@@ -19,3 +19,13 @@ class WikiPageForm(forms.ModelForm):
         help_texts: ClassVar[Dict[str, str]] = {
             "content": "Use Markdown formatting for rich text.",
         }
+
+
+class AddFollowForm(forms.Form):
+    """Form for following a user by username"""
+
+    username = forms.CharField(
+        max_length=150,
+        label="Username",
+        widget=forms.TextInput(attrs={"placeholder": "Enter username"}),
+    )

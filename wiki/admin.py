@@ -2,7 +2,7 @@ from typing import ClassVar, Tuple
 
 from django.contrib import admin
 
-from .models import PageRevision, UserActivity, WikiPage
+from .models import Follow, PageRevision, UserActivity, WikiPage
 
 
 @admin.register(WikiPage)
@@ -39,6 +39,18 @@ class UserActivityAdmin(admin.ModelAdmin):
         "user__username",
         "page__title",
         "details",
+    )
+    date_hierarchy: ClassVar[str] = "created_at"
+    readonly_fields: ClassVar[Tuple[str, ...]] = ("created_at",)
+
+
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+    list_display: Tuple[str, ...] = ("follower", "following", "created_at")
+    list_filter: ClassVar[Tuple[str, ...]] = ("created_at",)
+    search_fields: ClassVar[Tuple[str, ...]] = (
+        "follower__username",
+        "following__username",
     )
     date_hierarchy: ClassVar[str] = "created_at"
     readonly_fields: ClassVar[Tuple[str, ...]] = ("created_at",)

@@ -30,4 +30,7 @@ urlpatterns = [
         views.restore_revision,
         name="restore_revision",
     ),
+    # Follow management URLs
+    path("follows/add/", views.add_follow, name="add_follow"),
+    path("follows/remove/<int:follow_id>/", views.remove_follow, name="remove_follow"),
 ]

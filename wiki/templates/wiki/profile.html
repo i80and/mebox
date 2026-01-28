@@ -14,6 +14,10 @@
     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
         <a href="{% url 'user_profile' profile_user.username %}" class="btn {% if not request.resolver_match.url_name == 'user_activity' %}btn-secondary{% endif %}">Wiki Pages</a>
         <a href="{% url 'user_activity' profile_user.username %}" class="btn {% if request.resolver_match.url_name == 'user_activity' %}btn-secondary{% endif %}">Activity</a>
+        {% if user == profile_user %}
+            <a href="{% url 'user_profile' profile_user.username %}#following" class="btn {% if request.resolver_match.url_name == 'user_profile' and 'following' in request.GET %}btn-secondary{% endif %}">Following</a>
+            <a href="{% url 'user_profile' profile_user.username %}#followers" class="btn {% if request.resolver_match.url_name == 'user_profile' and 'followers' in request.GET %}btn-secondary{% endif %}">Followers</a>
+        {% endif %}
     </div>
     
     {% if user == profile_user %}
@@ -51,5 +55,81 @@
                 {% endif %}
             </div>
         {% endif %}
+    {% endif %}
+    
+    {% if user == profile_user and following %}
+        <div id="following" style="margin-top: 40px;">
+            <h2>Following ({{ following|length }})</h2>
+            
+            {% if following %}
+                <ul class="page-list">
+                    {% for followed_user in following %}
+                        <li>
+                            <a href="{% url 'user_profile' followed_user.username %}">{{ followed_user.username }}</a>
+                            <span class="page-actions">
+                                <form action="{% url 'remove_follow' followed_user.id %}" method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure you want to unfollow {{ followed_user.username }}?')">Unfollow</button>
+                                </form>
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <h3>Not following anyone yet</h3>
+                    <p>You haven't followed any users yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    {% if user == profile_user and followers %}
+        <div id="followers" style="margin-top: 40px;">
+            <h2>Followers ({{ followers|length }})</h2>
+            
+            {% if followers %}
+                <ul class="page-list">
+                    {% for follower in followers %}
+                        <li>
+                            <a href="{% url 'user_profile' follower.username %}">{{ follower.username }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <h3>No followers yet</h3>
+                    <p>No one is following you yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    {% if user != profile_user %}
+        <div style="margin-top: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+            {% if is_following %}
+                <p>You are following {{ profile_user.username }}.</p>
+                {% if is_followed_by %}
+                    <p style="margin-top: 5px; font-size: 0.9em; color: #27ae60; font-weight: bold;">
+                        ✓ You are mutuals with {{ profile_user.username }}
+                    </p>
+                {% endif %}
+                {% if mutual_follows %}
+                    <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                        <strong>Mutual follows ({{ mutual_follows|length }}):</strong>
+                        {% for mutual in mutual_follows %}
+                            <a href="{% url 'user_profile' mutual.username %}">{{ mutual.username }}</a>{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            {% else %}
+                <p>You are not following {{ profile_user.username }} yet.</p>
+                <form action="{% url 'add_follow' %}" method="post" style="margin-top: 10px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="username" value="{{ profile_user.username }}">
+                    <button type="submit" class="btn">Follow</button>
+                </form>
+            {% endif %}
+        </div>
     {% endif %}
 {% endblock %}

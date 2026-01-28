@@ -6,6 +6,9 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 
+
+
+
 class WikiPage(models.Model):
     """Model for user wiki pages"""
 
@@ -92,3 +95,82 @@ class UserActivity(models.Model):
 
     def __str__(self) -> str:
         return f"{self.get_activity_type_display()} by {self.user.username}"
+
+
+class Follow(models.Model):
+    """Model for tracking follow relationships between users"""
+
+    follower = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="following"
+    )
+    following = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="followers"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Follow"
+        verbose_name_plural = "Follows"
+        # Ensure we don't have duplicate follows
+        constraints = [
+            models.UniqueConstraint(
+                fields=["follower", "following"], name="unique_follow"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.follower.username} follows {self.following.username}"
+
+    def save(self, *args, **kwargs) -> None:
+        """Ensure no self-follows"""
+        if self.follower == self.following:
+            raise ValueError("Users cannot follow themselves")
+        super().save(*args, **kwargs)
+
+
+def get_following(user: User) -> models.QuerySet[User]:
+    """
+    Get all users that the given user is following.
+    
+    Returns a QuerySet of User objects that the user follows.
+    """
+    return User.objects.filter(
+        id__in=Follow.objects.filter(follower=user).values("following_id")
+    ).order_by("username")
+
+
+def get_followers(user: User) -> models.QuerySet[User]:
+    """
+    Get all users that follow the given user.
+    
+    Returns a QuerySet of User objects that follow the user.
+    """
+    return User.objects.filter(
+        id__in=Follow.objects.filter(following=user).values("follower_id")
+    ).order_by("username")
+
+
+def is_following(user: User, target_user: User) -> bool:
+    """
+    Check if user is following target_user.
+    
+    Returns True if user follows target_user, False otherwise.
+    """
+    return Follow.objects.filter(follower=user, following=target_user).exists()
+
+
+def get_mutual_follows(user: User, target_user: User) -> models.QuerySet[User]:
+    """
+    Get mutual follows between two users.
+    
+    Returns a QuerySet of User objects that both users follow.
+    """
+    # Get IDs of users that user follows
+    user_following_ids = set(get_following(user).values_list("id", flat=True))
+    # Get IDs of users that target_user follows
+    target_following_ids = set(get_following(target_user).values_list("id", flat=True))
+    # Find intersection
+    mutual_ids = user_following_ids & target_following_ids
+    # Return users with those IDs
+    return User.objects.filter(id__in=mutual_ids).order_by("username")
