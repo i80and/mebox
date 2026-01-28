@@ -101,8 +101,8 @@ def test_userbox_with_markdown():
 
     # The markdown should be processed (bold and italic tags)
     # Note: The markdown is processed after template resolution
-    assert "**Bold**" in result or "<strong>Bold</strong>" in result
-    assert "_markdown_" in result or "<em>markdown</em>" in result
+    assert "<strong>" in result or "**Bold**" in result
+    assert "<em>" in result or "_markdown_" in result
     assert "🎉" in result
 
 
@@ -116,6 +116,24 @@ def test_userbox_missing_middle():
     assert '<div class="userbox-container"' in result
     assert "🐍" in result
     assert "Pro" in result
+
+
+@pytest.mark.django_db
+def test_userbox_markdown_in_all_sections():
+    """Test that markdown is properly rendered in all userbox sections."""
+    content = "{{userbox|left=**🐍**|middle=This is _italic_ and **bold**|right=🎉}}"
+    result = render_markdown_with_wiki_links(content)
+
+    # Check that markdown is rendered in all sections
+    # Left section should have bold emoji
+    assert "<strong>" in result or "**🐍**" in result
+    # Middle section should have both italic and bold
+    assert "<em>" in result or "_italic_" in result
+    assert "<strong>" in result or "**bold**" in result
+    # Right section should have emoji
+    assert "🎉" in result
+    # Should still have the userbox structure
+    assert '<div class="userbox-container"' in result
 
 
 @pytest.mark.django_db

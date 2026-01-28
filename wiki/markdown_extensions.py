@@ -153,6 +153,101 @@ def _resolve_template_content(
         return None
 
 
+def _escape_html(text: str) -> str:
+    """
+    Escape HTML special characters to prevent XSS attacks.
+
+    Args:
+        text: The text to escape
+
+    Returns:
+        Escaped text with HTML special characters replaced
+    """
+    if not text:
+        return text
+
+    html_escape_table = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&apos;",
+    }
+
+    return "".join(html_escape_table.get(c, c) for c in text)
+
+
+def _sanitize_url(url: str) -> str:
+    """
+    Sanitize URLs to prevent XSS attacks via javascript: and other dangerous protocols.
+
+    Args:
+        url: The URL to sanitize
+
+    Returns:
+        Sanitized URL or None if the URL is dangerous
+    """
+    if not url:
+        return url
+
+    # List of dangerous protocols
+    dangerous_protocols = [
+        "javascript",
+        "data",
+        "vbscript",
+        "file",
+        "about",
+    ]
+
+    # Check if URL starts with a dangerous protocol
+    url_lower = url.lower()
+    for protocol in dangerous_protocols:
+        if url_lower.startswith(protocol + ":"):
+            # Return a safe placeholder
+            return "#"
+
+    return url
+
+
+def _sanitize_markdown_text(text: str) -> str:
+    """
+    Sanitize markdown text by replacing dangerous URL protocols.
+
+    Args:
+        text: The markdown text to sanitize
+
+    Returns:
+        Sanitized markdown text with dangerous links replaced
+    """
+    if not text:
+        return text
+
+    # Replace dangerous protocols in markdown links
+    # Pattern: [text](javascript:...), [text](data:...), etc.
+    import re
+
+    # Match markdown links with dangerous protocols
+    def replace_dangerous_link(match: re.Match) -> str:
+        link_text = match.group(1)  # The display text
+        url = match.group(2)  # The URL
+
+        # Check if URL uses a dangerous protocol
+        url_lower = url.lower()
+        dangerous_protocols = ["javascript:", "data:", "vbscript:", "file:", "about:"]
+
+        if any(url_lower.startswith(protocol) for protocol in dangerous_protocols):
+            # Replace with a safe link (hash)
+            return f"[{link_text}](#)"
+        result = match.group(0)
+        assert isinstance(result, str)
+        return result
+
+    # Apply the replacement
+    text = re.sub(r"\[([^\]]+)\]\(([^\)]+)\)", replace_dangerous_link, text)
+
+    return text
+
+
 def _generate_userbox_html(params: Dict[str, str]) -> str:
     """
     Generate HTML for a userbox based on the provided parameters.
@@ -175,6 +270,79 @@ def _generate_userbox_html(params: Dict[str, str]) -> str:
     right_bg = params.get("right-bg", "#f0f0f0")
     right_fg = params.get("right-fg", "#000000")
 
+    # Escape HTML to prevent XSS attacks before rendering markdown
+    # This ensures that any HTML tags in the input are escaped
+    left_escaped = _escape_html(left)
+    middle_escaped = _escape_html(middle)
+    right_escaped = _escape_html(right)
+
+    # Sanitize URLs in markdown links to prevent XSS
+    # Replace dangerous protocols with safe placeholders
+    def sanitize_markdown_text(text: str) -> str:
+        """Sanitize markdown text by replacing dangerous URL protocols."""
+        if not text:
+            return text
+
+        # Replace dangerous protocols in markdown links
+        # Pattern: [text](javascript:...), [text](data:...), etc.
+        import re
+
+        # Match markdown links with dangerous protocols
+        def replace_dangerous_link(match: re.Match) -> str:
+            link_text = match.group(1)  # The display text
+            url = match.group(2)  # The URL
+
+            # Check if URL uses a dangerous protocol
+            url_lower = url.lower()
+            dangerous_protocols = [
+                "javascript:",
+                "data:",
+                "vbscript:",
+                "file:",
+                "about:",
+            ]
+
+            if any(url_lower.startswith(protocol) for protocol in dangerous_protocols):
+                # Replace with a safe link (hash)
+                return f"[{link_text}](#)"
+            result = match.group(0)
+            assert isinstance(result, str)
+            return result
+
+        # Apply the replacement
+        text = re.sub(r"\[([^\]]+)\]\(([^\)]+)\)", replace_dangerous_link, text)
+
+        return text
+
+    # Sanitize the markdown content
+    left_sanitized = _sanitize_markdown_text(left_escaped)
+    middle_sanitized = _sanitize_markdown_text(middle_escaped)
+    right_sanitized = _sanitize_markdown_text(right_escaped)
+
+    # Render markdown for the content sections
+    # We use a simple markdown renderer for the userbox content
+    md = MarkdownIt()
+
+    # Render markdown for each section
+    left_html = md.render(left_sanitized) if left_sanitized else left_sanitized
+    middle_html = md.render(middle_sanitized) if middle_sanitized else middle_sanitized
+    right_html = md.render(right_sanitized) if right_sanitized else right_sanitized
+
+    # Extract just the inner HTML content (remove surrounding <p> tags if present)
+    def extract_inner_html(html_content: str) -> str:
+        """Extract inner content from markdown-rendered HTML, removing wrapper tags."""
+        if html_content.startswith("<p>"):
+            html_content = html_content[3:]
+        if html_content.endswith("</p>"):
+            html_content = html_content[:-4]
+        return html_content.strip()
+
+    left_content = extract_inner_html(left_html) if left_escaped else left_escaped
+    middle_content = (
+        extract_inner_html(middle_html) if middle_escaped else middle_escaped
+    )
+    right_content = extract_inner_html(right_html) if right_escaped else right_escaped
+
     # Build the HTML structure
     html_parts = []
 
@@ -187,30 +355,30 @@ def _generate_userbox_html(params: Dict[str, str]) -> str:
     # Add left section if provided
     if left:
         html_parts.append(
-            f'    <div class="userbox-left" style="background-color: {left_bg}; color: {left_fg};">{left}</div>'
+            f'    <div class="userbox-left" style="background-color: {left_bg}; color: {left_fg};">{left_content}</div>'
         )
 
     # Add middle section (always present)
     if left and right:
         # Middle section between left and right
         html_parts.append(
-            f'    <div class="userbox-middle" style="background-color: {middle_bg}; color: {middle_fg};">{middle}</div>'
+            f'    <div class="userbox-middle" style="background-color: {middle_bg}; color: {middle_fg};">{middle_content}</div>'
         )
     elif left or right:
         # Middle section expands to fill remaining space
         html_parts.append(
-            f'    <div class="userbox-middle" style="background-color: {middle_bg}; color: {middle_fg};">{middle}</div>'
+            f'    <div class="userbox-middle" style="background-color: {middle_bg}; color: {middle_fg};">{middle_content}</div>'
         )
     else:
         # Only middle section (no left or right)
         html_parts.append(
-            f'    <div class="userbox-middle" style="background-color: {middle_bg}; color: {middle_fg};">{middle}</div>'
+            f'    <div class="userbox-middle" style="background-color: {middle_bg}; color: {middle_fg};">{middle_content}</div>'
         )
 
     # Add right section if provided
     if right:
         html_parts.append(
-            f'    <div class="userbox-right" style="background-color: {right_bg}; color: {right_fg};">{right}</div>'
+            f'    <div class="userbox-right" style="background-color: {right_bg}; color: {right_fg};">{right_content}</div>'
         )
 
     # Close the container
@@ -381,7 +549,12 @@ def render_markdown_with_wiki_links(
     Returns:
         HTML string with rendered markdown and wiki links
     """
-    # First, resolve all templates in the content
+    # First, apply XSS protection to the content
+    # Escape HTML and sanitize URLs to prevent XSS attacks
+    content_escaped = _escape_html(content)
+    content_sanitized = _sanitize_markdown_text(content_escaped)
+
+    # Then, resolve all templates in the content
     # We need to do this before markdown processing so that wiki links
     # inside templates are also processed
 
@@ -394,7 +567,9 @@ def render_markdown_with_wiki_links(
         return resolved if resolved is not None else match.group(0)
 
     # Resolve templates in the content
-    content = re.sub(r"\{\{([^|\}]+)(?:\|([^}]*))?\}\}", resolve_templates, content)
+    content_sanitized = re.sub(
+        r"\{\{([^|\}]+)(?:\|([^}]*))?\}\}", resolve_templates, content_sanitized
+    )
 
     # Then process with markdown
     md = MarkdownIt()
@@ -412,6 +587,6 @@ def render_markdown_with_wiki_links(
     # Apply the wiki link plugin
     md.use(lambda m: wiki_link_plugin(m, user_pages, username))
 
-    result = md.render(content)
+    result = md.render(content_sanitized)
     assert isinstance(result, str)
     return result
