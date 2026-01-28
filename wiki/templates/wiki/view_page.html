@@ -2,6 +2,19 @@
 
 {% block title %}{{ page.title }} - MeBox{% endblock %}
 
+{% block og_type %}article{% endblock %}
+
+{% block og_url %}{% if request %}{{ request.scheme }}://{{ request.get_host }}{% url 'view_wiki_page' page.author.username page.slug %}{% endif %}{% endblock %}
+
+{% block og_title %}{{ page.title }} - {{ page.author.username }}'s Wiki Page{% endblock %}
+
+{% block og_description %}
+{% if page.content|length < 200 %}
+{{ page.content|striptags|truncatechars:200 }}
+{% else %}
+{{ page.content|striptags|truncatechars:200 }}...{% endif %}
+{% endblock %}
+
 {% block content %}
     <div style="margin-bottom: 20px;">
         <h1>{{ page.title }}</h1>

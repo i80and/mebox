@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MeBox - Social Wiki Network{% endblock %}</title>
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}MeBox - Social Wiki Network{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}A social wiki network where users can create and share knowledge.{% endblock %}">
     <style>
         * {
             margin: 0;

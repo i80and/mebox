@@ -2,6 +2,10 @@
 
 {% block title %}{{ profile_user.username }}'s Profile - MeBox{% endblock %}
 
+{% block og_title %}{{ profile_user.username }}'s Profile - MeBox{% endblock %}
+
+{% block og_description %}Explore {{ profile_user.username }}'s wiki pages and activity on MeBox, the social wiki network.{% endblock %}
+
 {% block content %}
     <div class="user-profile">
         <div class="user-avatar">{{ profile_user.username|slice:"1"|upper }}</div>

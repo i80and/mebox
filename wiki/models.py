@@ -6,9 +6,6 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 
-
-
-
 class WikiPage(models.Model):
     """Model for user wiki pages"""
 
@@ -132,7 +129,7 @@ class Follow(models.Model):
 def get_following(user: User) -> models.QuerySet[User]:
     """
     Get all users that the given user is following.
-    
+
     Returns a QuerySet of User objects that the user follows.
     """
     return User.objects.filter(
@@ -143,7 +140,7 @@ def get_following(user: User) -> models.QuerySet[User]:
 def get_followers(user: User) -> models.QuerySet[User]:
     """
     Get all users that follow the given user.
-    
+
     Returns a QuerySet of User objects that follow the user.
     """
     return User.objects.filter(
@@ -154,7 +151,7 @@ def get_followers(user: User) -> models.QuerySet[User]:
 def is_following(user: User, target_user: User) -> bool:
     """
     Check if user is following target_user.
-    
+
     Returns True if user follows target_user, False otherwise.
     """
     return Follow.objects.filter(follower=user, following=target_user).exists()
@@ -163,7 +160,7 @@ def is_following(user: User, target_user: User) -> bool:
 def get_mutual_follows(user: User, target_user: User) -> models.QuerySet[User]:
     """
     Get mutual follows between two users.
-    
+
     Returns a QuerySet of User objects that both users follow.
     """
     # Get IDs of users that user follows

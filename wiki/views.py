@@ -95,14 +95,14 @@ def user_profile(request: HttpRequest, username: str) -> HttpResponse:
 
     # Get user's wiki pages
     pages = WikiPage.objects.filter(author=user).order_by("-created_at")
-    
+
     # Get following/followers if viewing own profile
     following = None
     followers = None
     is_following_user = False
     is_followed_by_user = False
     mutual_follows = None
-    
+
     if current_user == user:
         # Viewing own profile
         following = get_following(current_user)
@@ -384,35 +384,35 @@ def handle_invalid_wiki_link(
 def add_follow(request: HttpRequest) -> HttpResponse:
     """Follow a user"""
     user = _get_authenticated_user(request)
-    
+
     if request.method == "POST":
         form = AddFollowForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data["username"]
-            
+
             try:
                 target_user = User.objects.get(username=username)
-                
+
                 # Can't follow yourself
                 if target_user == user:
                     messages.error(request, "You cannot follow yourself.")
                     return redirect("user_profile", username=user.username)
-                
+
                 # Check if already following
                 if is_following(user, target_user):
                     messages.info(request, f"You are already following {username}.")
                     return redirect("user_profile", username=user.username)
-                
+
                 # Create follow relationship
                 Follow.objects.create(follower=user, following=target_user)
                 messages.success(request, f"You are now following {username}!")
-                
+
                 return redirect("user_profile", username=user.username)
-                
+
             except User.DoesNotExist:
                 messages.error(request, f"User '{username}' does not exist.")
                 return redirect("user_profile", username=user.username)
-    
+
     # If not POST, redirect to profile
     return redirect("user_profile", username=user.username)
 
@@ -421,21 +421,21 @@ def add_follow(request: HttpRequest) -> HttpResponse:
 def remove_follow(request: HttpRequest, follow_id: int) -> HttpResponse:
     """Unfollow a user"""
     user = _get_authenticated_user(request)
-    
+
     try:
         target_user = User.objects.get(id=follow_id)
-        
+
         # Check if they are actually following
         if not is_following(user, target_user):
             messages.error(request, f"You are not following {target_user.username}.")
             return redirect("user_profile", username=user.username)
-        
+
         # Remove follow relationship
         Follow.objects.filter(follower=user, following=target_user).delete()
-        
+
         messages.success(request, f"You have unfollowed {target_user.username}.")
-        
+
     except User.DoesNotExist:
         messages.error(request, "User not found.")
-    
+
     return redirect("user_profile", username=user.username)
