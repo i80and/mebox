@@ -12,10 +12,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = Path(os.environ.get("DB_DIR", BASE_DIR / "db.sqlite3")).resolve()
+
+urls = os.environ.get("SITE_URLS", "").split(",") or None
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -28,7 +31,7 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [urlparse(url).hostname for url in urls] if urls is not None else ["*"]
 
 
 # Application definition
@@ -142,4 +145,8 @@ AUTHENTICATION_BACKENDS = [
 
 # Production hardening
 SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    assert urls is not None, "SITE_URLS environment variable is not set"
+    CSRF_TRUSTED_ORIGINS = urls
