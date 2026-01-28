@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = Path(os.environ.get("DB_DIR", BASE_DIR / "db.sqlite3")).resolve()
+DB_PATH = Path(os.environ.get("DB_PATH", BASE_DIR / "db.sqlite3")).resolve()
 
 urls = os.environ.get("SITE_URLS", "").split(",") or None
 
