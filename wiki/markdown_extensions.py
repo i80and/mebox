@@ -2,6 +2,7 @@
 Markdown extensions for the wiki application.
 """
 
+import re
 from typing import Dict, Optional
 
 from django.contrib.auth import get_user_model
@@ -23,7 +24,7 @@ def _parse_template_params(param_str: str) -> Dict[str, str]:
     Returns:
         Dict mapping parameter names to values, e.g., {"name": "Bob", "age": "25"}
     """
-    params = {}
+    params: dict[str, str] = {}
     if not param_str:
         return params
 
@@ -87,7 +88,7 @@ def _resolve_template_content(
                     # Userbox template page exists, use regular template resolution
                 # If we get here, a userbox template page exists, so use regular resolution
                 pass
-            except Exception:  # WikiPage.DoesNotExist
+            except WikiPage.DoesNotExist:
                 # No userbox template page exists, use special handling
                 return _generate_userbox_html(params)
 
@@ -97,7 +98,7 @@ def _resolve_template_content(
             user = UserModel.objects.get(username=username)
             try:
                 template_page = WikiPage.objects.get(author=user, slug=template_name)
-            except Exception:  # WikiPage.DoesNotExist
+            except WikiPage.DoesNotExist:
                 # If not found in current user's namespace, try to find it in any user's namespace
                 # This allows cross-user template usage
                 template_page = WikiPage.objects.get(slug=template_name)
@@ -109,7 +110,6 @@ def _resolve_template_content(
 
         # Recursively resolve any nested templates in the content
         # We need to find all {{template}} patterns and resolve them
-        import re
 
         # Find all template invocations in the content
         pattern = r"\{\{([^|\}]+)(?:\|([^}]*))?\}\}"
@@ -128,7 +128,9 @@ def _resolve_template_content(
                 return resolved
             else:
                 # If template not found, return the original text
-                return match.group(0)
+                result = match.group(0)
+                assert isinstance(result, str)
+                return result
 
         # Resolve nested templates first
         content = re.sub(pattern, replace_template, content)
@@ -137,14 +139,16 @@ def _resolve_template_content(
         # Parameters are in the format {{{param_name}}}
         def substitute_param(match: re.Match) -> str:
             param_name = match.group(1).strip()
-            return params.get(param_name, match.group(0))
+            result = params.get(param_name, match.group(0))
+            assert isinstance(result, str)
+            return result
 
         content = re.sub(r"\{\{\{([^}]+)\}\}\}", substitute_param, content)
 
         visited.remove(template_name)
         return content
 
-    except (UserModel.DoesNotExist, Exception):  # WikiPage.DoesNotExist
+    except (UserModel.DoesNotExist, WikiPage.DoesNotExist):
         visited.remove(template_name)
         return None
 
@@ -380,7 +384,6 @@ def render_markdown_with_wiki_links(
     # First, resolve all templates in the content
     # We need to do this before markdown processing so that wiki links
     # inside templates are also processed
-    import re
 
     def resolve_templates(match: re.Match) -> str:
         template_name = match.group(1).strip()
@@ -409,4 +412,6 @@ def render_markdown_with_wiki_links(
     # Apply the wiki link plugin
     md.use(lambda m: wiki_link_plugin(m, user_pages, username))
 
-    return md.render(content)
+    result = md.render(content)
+    assert isinstance(result, str)
+    return result

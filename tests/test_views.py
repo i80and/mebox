@@ -316,6 +316,7 @@ class TestRevisionRestoration:
         current_revision = PageRevision.objects.filter(
             page=wiki_page, is_current=True
         ).first()
+        assert current_revision is not None
         assert current_revision.content == page_revision.content
 
     def test_restore_revision_logs_activity(

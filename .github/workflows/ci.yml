@@ -24,7 +24,7 @@ jobs:
         run: uv sync --all-extras
 
       - name: Run type checking
-        run: uv run ty check
+        run: uv run mypy .
 
       - name: Run ruff
         run: uv run ruff check

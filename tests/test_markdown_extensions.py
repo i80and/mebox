@@ -142,9 +142,7 @@ class TestRenderMarkdownWithWikiLinks:
     def test_render_with_username_no_pages(self, db):
         """Test rendering with username but no pages exist"""
         # Create a user but no pages
-        User.objects.create_user(
-            username="testuser_no_pages", password="testpass"
-        )
+        User.objects.create_user(username="testuser_no_pages", password="testpass")
 
         result = render_markdown_with_wiki_links(
             "This is [[a test]] link.", "testuser_no_pages"

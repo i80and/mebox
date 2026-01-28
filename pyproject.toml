@@ -7,8 +7,10 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "django>=4.2",
+    "django-stubs[compatible-mypy]>=1.9.0",
     "markdown-it-py>=3.0",
     "mdurl>=0.1",
+    "mypy>=1.19.1",
     "python-multipart>=0.0.6",
 ]
 
@@ -18,7 +20,7 @@ dev = [
     "black>=23.0",
     "isort>=5.0",
     "flake8>=6.0",
-    "ty>=0.0.14",
+    "mypy>=1.10.0",
     "ruff>=0.14.14",
     "pytest>=8.4.2",
     "pytest-django>=4.0",
@@ -33,3 +35,31 @@ build-backend = "hatchling.build"
 DJANGO_SETTINGS_MODULE = "mebox.settings"
 python_files = ["tests.py", "test_*.py"]
 addopts = "--cov=wiki --cov-report=term-missing"
+
+[tool.mypy]
+python_version = "3.14"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+allow_redefinition = true
+implicit_reexport = true
+plugins = ["mypy_django_plugin.main"]
+
+[[tool.mypy.overrides]]
+module = ["tests.*", "*.tests"]
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = ["wiki.migrations.*"]
+ignore_errors = true
+
+[tool.django-stubs]
+django_settings_module = "mebox.settings"
+strict_settings = false

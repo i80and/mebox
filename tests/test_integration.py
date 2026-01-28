@@ -59,6 +59,7 @@ class TestFullWorkflow:
         old_revision = PageRevision.objects.filter(
             page=page, content="# Version 1"
         ).first()
+        assert old_revision is not None
         response = client.post(f"/page/{page.id}/revisions/{old_revision.id}/restore/")
         assert response.status_code == 302
         page.refresh_from_db()
@@ -159,7 +160,9 @@ class TestRevisionHistory:
         # Check that only the latest is marked as current
         current_revisions = PageRevision.objects.filter(page=page, is_current=True)
         assert current_revisions.count() == 1
-        assert current_revisions.first().content == "# Version 6"
+        current_rev = current_revisions.first()
+        assert current_rev is not None
+        assert current_rev.content == "# Version 6"
 
         # Check that we can view all revisions
         response = client.get(f"/page/{page.id}/revisions/")
@@ -169,6 +172,7 @@ class TestRevisionHistory:
         middle_revision = PageRevision.objects.filter(
             page=page, content="# Version 3"
         ).first()
+        assert middle_revision is not None
         client.post(f"/page/{page.id}/revisions/{middle_revision.id}/restore/")
 
         page.refresh_from_db()
@@ -179,6 +183,7 @@ class TestRevisionHistory:
         latest_revision = PageRevision.objects.filter(
             page=page, is_current=True
         ).first()
+        assert latest_revision is not None
         assert latest_revision.content == "# Version 3"
 
 
@@ -231,6 +236,7 @@ class TestPermissionBoundary:
 
         # User2 should not be able to restore User1's revisions
         revision = PageRevision.objects.filter(page=page1).first()
+        assert revision is not None
         response = client.post(f"/page/{page1.id}/revisions/{revision.id}/restore/")
         assert response.status_code == 302  # Redirect to their own profile
 
@@ -293,6 +299,7 @@ This is the second section.
         old_revision = (
             PageRevision.objects.filter(page=page).order_by("created_at").first()
         )
+        assert old_revision is not None
         client.post(f"/page/{page.id}/revisions/{old_revision.id}/restore/")
 
         # Verify original content is restored exactly
@@ -310,6 +317,7 @@ This is the second section.
         current_revision = PageRevision.objects.filter(
             page=page, is_current=True
         ).first()
+        assert current_revision is not None
         assert current_revision.content.strip() == original_content.strip()
 
 

@@ -1,7 +1,7 @@
 .PHONY: check test
 
 check:
-	uv run ty check
+	uv run mypy .
 	uv run ruff check
 
 test:

@@ -80,9 +80,9 @@ class TestURLPatterns:
 class TestURLReversing:
     """Test URL reversing"""
 
-    def test_all_urls_reverse_correctly(self):
+    def test_all_urls_reverse_correctly(self) -> None:
         """Test that all URLs can be reversed"""
-        urls_to_test = [
+        urls_to_test: list[tuple[str, list[object]]] = [
             ("home", []),
             ("signup", []),
             ("login", []),
@@ -107,7 +107,7 @@ class TestURLReversing:
 class TestURLPatternsExist:
     """Test that URL patterns exist"""
 
-    def test_all_expected_urls_exist(self):
+    def test_all_expected_urls_exist(self) -> None:
         """Test that all expected URL patterns exist"""
         expected_urls = [
             "home",

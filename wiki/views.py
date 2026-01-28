@@ -1,14 +1,14 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
-from django.contrib.auth import get_user_model
-from django.http import HttpRequest, HttpResponse, Http404
-from .models import WikiPage, PageRevision, UserActivity
+from django.http import Http404, HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+
 from .forms import WikiPageForm
 from .markdown_extensions import render_markdown_with_wiki_links
+from .models import PageRevision, UserActivity, WikiPage
 
 UserModel = get_user_model()
 
@@ -16,7 +16,8 @@ UserModel = get_user_model()
 def _get_authenticated_user(request: HttpRequest) -> User:
     """Helper to get authenticated user from request"""
     # This is safe because the views are decorated with @login_required
-    return request.user  # type: ignore[attr-defined]
+    assert isinstance(request.user, User)
+    return request.user
 
 
 def home(request: HttpRequest) -> HttpResponse:
@@ -28,7 +29,7 @@ def home(request: HttpRequest) -> HttpResponse:
 def signup(request: HttpRequest) -> HttpResponse:
     """User signup view"""
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form: UserCreationForm = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
@@ -191,7 +192,7 @@ def view_wiki_page(request: HttpRequest, username: str, page_slug: str) -> HttpR
 
     try:
         page = WikiPage.objects.get(author=user, slug=page_slug)
-    except WikiPage.DoesNotExist:  # type: ignore[misc]
+    except WikiPage.DoesNotExist:
         raise Http404(f'Page "{page_slug}" does not exist for user "{username}"')
 
     # Render markdown content with wiki link support
